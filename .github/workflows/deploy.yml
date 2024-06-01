@@ -1,21 +1,26 @@
-name: Deploy Code to Release Branch
+name: Deploy to Raspberry Pi
+
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
-    name: Push to Release Branch
+  deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      # Workflow dispatch event that pushes the current version to the release branch.
-      # From here the secondary production deployment workflow will trigger to build the dependencies.
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: releases/v4
-          folder: .
-          clean: false
-          single-commit: true
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PI_HOST }}
+        username: ${{ secrets.PI_USER }}
+        key: ${{ secrets.PI_SSH_KEY }}
+        port: ${{ secrets.PI_PORT }}
+        script: |
+          cd /home/pi/your_project_directory
+          git pull origin main
+          python3 ultrasonic.py
